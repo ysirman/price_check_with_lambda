@@ -1,0 +1,21 @@
+version: '3.7'
+
+services:
+  backend:
+    build:
+      context: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./:/app
+      - cargo-cache:/usr/local/cargo/registry
+      - target-cache:/app/target
+    command: /bin/sh -c "cargo watch -x run"
+    tty: true
+    stdin_open: true
+    environment:
+      - RUST_BACKTRACE=full # デバッグ用
+
+volumes:
+  cargo-cache:
+  target-cache:
