@@ -16,39 +16,29 @@ use reqwest::StatusCode;
 use scraper::{Html, Selector};
 #[tokio::main]
 pub async fn get_price_and_rates() -> String {
+    let default_expect_rate = 90;
+    let expect_rate: i32 = match dotenv::var("EXPECT_RATE") {
+        Ok(val) => match val.parse::<i32>() { Ok(expect_rate) => expect_rate,
+                                              Err(_) => default_expect_rate }
+        Err(_) => default_expect_rate };
     let client = get_client();
     let url: String = dotenv::var("TARGET_URL").unwrap();
     let result = client.get(&url).send().await.unwrap();
     let raw_html = match result.status() {
         StatusCode::OK => result.text().await.unwrap(),
-        _ => panic!("Something went wrong"),
+        _ => panic!("HTML取得失敗"),
     };
     let document = Html::parse_document(&raw_html);
 
-    // [Target Selector]
+    // スクレイピング対象
     // <td class="giftList_cell giftList_cell-facevalue giftList_cell-label giftList_cell-labelBold" data-label="額面：">
     //     <span id="facevalue_2642950">¥ 10,000</span>
     //     <span class="giftList_rate giftList_spText">93.0 %</span>
     // </td>
     let wrapper_selector = Selector::parse("td.giftList_cell.giftList_cell-facevalue.giftList_cell-label.giftList_cell-labelBold").unwrap();
     let price_and_rate_select = Selector::parse("span").unwrap();
-
     let mut price_and_rate_vec:Vec<String> = Vec::new();
     price_and_rate_vec.push(url);
-    let default_expect_rate = 90;
-    let expect_rate: i32 = match dotenv::var("EXPECT_RATE") {
-        Ok(val) => match val.parse::<i32>() {
-            Ok(expect_rate) => expect_rate,
-            Err(_) => {
-                println!("EXPECT_RATE \"{}\"が不正な値なのでデフォルト値を使用", val);
-                default_expect_rate
-            }
-        }
-        Err(_) => {
-            println!("EXPECT_RATEが未定義なのでデフォルト値を使用");
-            default_expect_rate
-        }
-    };
     for (i, element) in document.select(&wrapper_selector).enumerate() {
         let price_and_rate:Vec<String> = element.select(&price_and_rate_select).map(|inner_element| {
             inner_element.inner_html().to_string()
