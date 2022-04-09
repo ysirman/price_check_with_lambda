@@ -33,16 +33,34 @@ pub async fn get_price_and_rates() -> String {
     let wrapper_selector = Selector::parse("td.giftList_cell.giftList_cell-facevalue.giftList_cell-label.giftList_cell-labelBold").unwrap();
     let price_and_rate_select = Selector::parse("span").unwrap();
 
-    let price_and_rate_vec:Vec<String> = document.select(&wrapper_selector).map(|element| {
+    let mut price_and_rate_vec:Vec<String> = Vec::new();
+    let default_expect_rate = 90;
+    let expect_rate: i32 = match dotenv::var("EXPECT_RATE") {
+        Ok(val) => match val.parse::<i32>() {
+            Ok(expect_rate) => expect_rate,
+            Err(_) => {
+                println!("EXPECT_RATE \"{}\"が不正な値なのでデフォルト値を使用", val);
+                default_expect_rate
+            }
+        }
+        Err(_) => {
+            println!("EXPECT_RATEが未定義なのでデフォルト値を使用");
+            default_expect_rate
+        }
+    };
+    for (i, element) in document.select(&wrapper_selector).enumerate() {
         let price_and_rate:Vec<String> = element.select(&price_and_rate_select).map(|inner_element| {
             inner_element.inner_html().to_string()
         }).collect();
         let rate: i32 = price_and_rate[1][..2].parse().unwrap();
-        println!("割引率：{}", price_and_rate[1]);
-        if rate > 90 { panic!("[ERROR] 割高のため処理中止"); }
 
-        price_and_rate.join(" / ")
-    }).collect();
+        // println!("割引率：{}", price_and_rate[1]);
+        if i == 0 && rate > expect_rate {
+            panic!("[ERROR] 割高のため処理中止（{}）", price_and_rate.join(" / "));
+        }
+
+        price_and_rate_vec.push(price_and_rate.join(" / "));
+    };
     // println!("{}", price_and_rate_vec.join("\n"));
     price_and_rate_vec.join("<br>")
 }
