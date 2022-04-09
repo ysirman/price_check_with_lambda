@@ -1,16 +1,30 @@
 version: '3.7'
 
 services:
+  builder:
+    build:
+      context: .
+      target: builder
+    image: builder:latest
+    volumes:
+      - ./:/home/rust/src/ # lambda.zipをコンテナ内で作成した時にホスト側でファイル取得できるようにする
+      - builder-cargo-cache:/usr/local/cargo/registry
+    # command: cargo build --release --target=x86_64-unknown-linux-musl
+    tty: true # コンテナにattachしてビルドする用
+    stdin_open: true
+
   backend:
     build:
       context: .
+      target: develop-stage
+    image: develop-stage:latest
     ports:
       - "8080:8080"
     volumes:
       - ./:/app
       - cargo-cache:/usr/local/cargo/registry
       - target-cache:/app/target
-    command: /bin/sh -c "cargo watch -x run"
+    # command: /bin/sh -c "cargo watch -x run" # Lambda で開発するときはLambdaのスタブで動作確認が必要なのでホットリロードでの確認はできない
     tty: true
     stdin_open: true
     environment:
@@ -19,3 +33,4 @@ services:
 volumes:
   cargo-cache:
   target-cache:
+  builder-cargo-cache:
