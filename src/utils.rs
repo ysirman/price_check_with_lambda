@@ -17,8 +17,8 @@ use scraper::{Html, Selector};
 #[tokio::main]
 pub async fn get_price_and_rates() -> String {
     let client = get_client();
-    let url = dotenv::var("TARGET_URL").unwrap();
-    let result = client.get(url).send().await.unwrap();
+    let url: String = dotenv::var("TARGET_URL").unwrap();
+    let result = client.get(&url).send().await.unwrap();
     let raw_html = match result.status() {
         StatusCode::OK => result.text().await.unwrap(),
         _ => panic!("Something went wrong"),
@@ -34,6 +34,7 @@ pub async fn get_price_and_rates() -> String {
     let price_and_rate_select = Selector::parse("span").unwrap();
 
     let mut price_and_rate_vec:Vec<String> = Vec::new();
+    price_and_rate_vec.push(url);
     let default_expect_rate = 90;
     let expect_rate: i32 = match dotenv::var("EXPECT_RATE") {
         Ok(val) => match val.parse::<i32>() {
