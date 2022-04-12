@@ -14,7 +14,7 @@ EMAIL_SEND_TO="to@example.com"
 EMAIL_SEND_FROM="from@example.com"
 
 # 割引率がEXPECT_RATE以下の場合にメール通知する
-EXPECT_RATE=90
+EXPECT_RATE=90.0
 ```
 
 ## util#get_price_and_rates をスクレイピング対象のHTML構造にあわせて修正

@@ -16,9 +16,9 @@ use reqwest::StatusCode;
 use scraper::{Html, Selector};
 #[tokio::main]
 pub async fn get_price_and_rates() -> String {
-    let default_expect_rate = 90;
-    let expect_rate: i32 = match dotenv::var("EXPECT_RATE") {
-        Ok(val) => match val.parse::<i32>() { Ok(expect_rate) => expect_rate,
+    let default_expect_rate = 90.0;
+    let expect_rate: f32 = match dotenv::var("EXPECT_RATE") {
+        Ok(val) => match val.parse::<f32>() { Ok(expect_rate) => expect_rate,
                                               Err(_) => default_expect_rate }
         Err(_) => default_expect_rate };
     let client = get_client();
@@ -43,7 +43,7 @@ pub async fn get_price_and_rates() -> String {
         let price_and_rate:Vec<String> = element.select(&price_and_rate_select).map(|inner_element| {
             inner_element.inner_html().to_string()
         }).collect();
-        let rate: i32 = price_and_rate[1][..2].parse().unwrap();
+        let rate: f32 = price_and_rate[1][..4].parse().unwrap(); // 93.0
 
         // println!("割引率：{}", price_and_rate[1]);
         if i == 0 && rate > expect_rate {
